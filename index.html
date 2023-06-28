@@ -1,0 +1,241 @@
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <title>Realidar</title>
+    <meta charset="utf-8">
+    <meta name="description" content="&lt;model-viewer&gt; template">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link type="text/css" href="./styles.css" rel="stylesheet"/>
+    <link rel="icon" href="favicon.ico" />
+    <!-- OPTIONAL: The :focus-visible polyfill removes the focus ring for some input types -->
+    <script src="https://unpkg.com/focus-visible@5.0.2/dist/focus-visible.js" defer></script>
+  </head>
+  <body>
+   <!-- <model-viewer> HTML element -->
+    <model-viewer id="hotspot-camera-view-demo"
+                  bounds="tight"
+                  src="MasterRealidar.glb"
+                  ar
+                  ios-src="MasterRealidar.usdz"
+                  ar-modes="scene-viewer webxr quick-look"
+                  camera-controls
+                  environment-image="universe.jpg"
+                  poster="poster.webp"
+                  shadow-intensity="1.6"
+                  autoplay
+                  skybox-image="universe.jpg"
+                  camera-target="0m 30m 0m"
+                  camera-orbit="-4.226deg 82.56deg auto"
+                  exposure="1.43"
+                  >
+      
+      <button class="Hotspot1"
+              slot="hotspot-1"
+              
+              data-position="-62.95474656333884m 60m 16.387053162645095m"
+              data-normal="0.7162855909069269m 3.848431805558022e-9m 0.6978072457771664m"
+              data-orbit="3.711166deg 92.3035deg 0.04335197m"
+              data-target="-65.1879433m 55.1157161m -75.01563221m"
+              data-visibility-attribute="visible" >
+          
+        
+      </button>
+      
+      <button class="Hotspot2"
+                       slot="hotspot-2"
+                       data-position="0.5373431150537371m 60m -38.02335608005524m"
+                       data-normal="0m 0m 1m"
+                       data-orbit="-70.711166deg 92.3035deg 0.04335197m"
+                       data-target="90.1879433m 65.1157161m -60.01563221m"
+                       data-visibility-attribute="visible">
+          
+      
+      </button>
+      
+      <button class="Hotspot3"
+              slot="hotspot-3"
+              data-position="65m 60m 29.20468726815984m"
+              data-normal="-0.5305432814608463m 6.0907077826974744e-9m 0.8476578475403607m"
+              data-orbit="-70.711166deg 92.3035deg 0.04335197m"
+              data-target="150.1879433m 55.1157161m -20.01563221m"
+              data-visibility-attribute="visible">
+          
+      
+      </button>
+      
+      
+      
+      
+      
+      
+      <div class="progress-bar hide" slot="progress-bar">
+          <div class="update-bar"></div>
+      </div>
+      <button slot="ar-button" id="ar-button">
+          Mira esta página en Realidad Aumentada
+      </button>
+      <div id="ar-prompt">
+          <img src="ar_hand_prompt.png">
+      </div>
+    </model-viewer>  
+    
+    <script type="module">
+  const modelViewer = document.querySelector("#hotspot-camera-view-demo");
+  const annotationClicked = (annotation) => {
+    let dataset = annotation.dataset;
+    modelViewer.cameraTarget = dataset.target;
+    modelViewer.cameraOrbit = dataset.orbit;
+  }
+
+  modelViewer.querySelectorAll('button').forEach((hotspot) => {
+    console.log("hello hotspot", hotspot);
+    hotspot.addEventListener('click', () => annotationClicked(hotspot));
+  });
+</script>
+    
+    <script type="module">
+  const modelViewer = document.querySelector("#hotspot-camera-view-demo");
+  const tapDistance = 2;
+  let panning = false;
+  let panX, panY;
+  let startX, startY;
+  let lastX, lastY;
+  let metersPerPixel;
+
+  const startPan = () => {
+    const orbit = modelViewer.getCameraOrbit();
+    const {theta, phi, radius} = orbit;
+    const psi = theta - modelViewer.turntableRotation;
+    metersPerPixel = 0.75 * radius / modelViewer.getBoundingClientRect().height;
+    panX = [-Math.cos(psi), 0, Math.sin(psi)];
+    panY = [
+      -Math.cos(phi) * Math.sin(psi),
+      Math.sin(phi),
+      -Math.cos(phi) * Math.cos(psi)
+    ];
+    modelViewer.interactionPrompt = 'none';
+  };
+
+  const stopPan = (event) => {
+    panning = false;
+  }
+
+  const movePan = (thisX, thisY) => {
+    const dx = (thisX - lastX) * metersPerPixel;
+    const dy = (thisY - lastY) * metersPerPixel;
+    lastX = thisX;
+    lastY = thisY;
+
+    const target = modelViewer.getCameraTarget();
+    target.x += dx * panX[0] + dy * panY[0];
+    target.y += dx * panX[1] + dy * panY[1];
+    target.z += dx * panX[2] + dy * panY[2];
+    modelViewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
+
+    // This pauses turntable rotation
+    modelViewer.dispatchEvent(new CustomEvent(
+          'camera-change', {detail: {source: 'user-interaction'}}));
+  };
+
+  const recenter = (pointer) => {
+    panning = false;
+    if (Math.abs(pointer.clientX - startX) > tapDistance ||
+        Math.abs(pointer.clientY - startY) > tapDistance)
+      return;
+    const hit = modelViewer.positionAndNormalFromPoint(pointer.clientX, pointer.clientY);
+    if(hit != null) {
+      modelViewer.cameraTarget = hit.position.toString();
+    }
+    else {
+      modelViewer.cameraTarget = 'auto auto auto';
+      modelViewer.cameraOrbit = 'auto auto auto';
+    }
+  };
+
+  modelViewer.addEventListener('mousedown', (event) => {
+    startX = event.clientX;
+    startY = event.clientY;
+    panning = event.button === 2 || event.ctrlKey || event.metaKey ||
+        event.shiftKey;
+    if (!panning)
+      return;
+
+    lastX = startX;
+    lastY = startY;
+    startPan();
+    event.stopPropagation();
+  }, true);
+
+  modelViewer.addEventListener('touchstart', (event) => {
+    const {targetTouches, touches} = event;
+    startX = targetTouches[0].clientX;
+    startY = targetTouches[0].clientY;
+    panning = targetTouches.length === 2 && targetTouches.length === touches.length;
+    if (!panning)
+      return;
+
+    lastX = 0.5 * (targetTouches[0].clientX + targetTouches[1].clientX);
+    lastY = 0.5 * (targetTouches[0].clientY + targetTouches[1].clientY);
+    startPan();
+  }, true);
+
+  self.addEventListener('mousemove', (event) => {
+    if (!panning)
+      return;
+
+    movePan(event.clientX, event.clientY);
+    event.stopPropagation();
+  }, true);
+
+  modelViewer.addEventListener('touchmove', (event) => {
+    if (!panning || event.targetTouches.length !== 2)
+      return;
+
+    const {targetTouches} = event;
+    const thisX = 0.5 * (targetTouches[0].clientX + targetTouches[1].clientX);
+    const thisY = 0.5 * (targetTouches[0].clientY + targetTouches[1].clientY);
+    movePan(thisX, thisY);
+  }, true);
+
+  let lastMousedown = {time: new Date().getTime()};
+  let lastTouchstart = {time: new Date().getTime()};
+  function doubletap(timer) {
+    var now = new Date().getTime();
+    var timesince = now - timer.time;
+    timer.time = new Date().getTime();
+    if((timesince < 400) && (timesince > 0))
+      return true;
+    else
+      return false;
+  }
+
+  self.addEventListener('mouseup', (event) => {
+    stopPan(event);
+  }, true);
+
+  modelViewer.addEventListener('oncontextmenu', (event) => {
+      return false;
+  });
+
+  self.addEventListener('mousedown', (event) => {
+    if(doubletap(lastMousedown))
+        recenter(event);
+  }, true);
+  
+  modelViewer.addEventListener('touchstart', (event) => {
+    if (doubletap(lastTouchstart) && event.targetTouches.length === 0) {
+      recenter(event.changedTouches[0]);
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+    }
+  }, true);
+</script>
+    
+    
+    <!-- Loads <model-viewer> for browsers: -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  </body>
+</html>

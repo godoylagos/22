@@ -1,0 +1,20 @@
+<model-viewer bounds="tight" src="MasterRealidar.glb" ar ar-modes="scene-viewer webxr quick-look" camera-controls environment-image="universe.jpg" poster="poster.webp" shadow-intensity="1.6" autoplay skybox-image="universe.jpg" camera-target="0m 30m 0m" camera-orbit="-4.226deg 82.56deg auto" exposure="1.43">
+    <button class="Hotspot" slot="hotspot-1" data-position="-62.95474656333884m 65.34438753682294m 16.387053162645095m" data-normal="0.7162855909069269m 3.848431805558022e-9m 0.6978072457771664m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">1</div>
+    </button><button class="Hotspot" slot="hotspot-2" data-position="0.5373431150537371m 63.69724574476467m -38.02335608005524m" data-normal="0m 0m 1m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">2</div>
+    </button><button class="Hotspot" slot="hotspot-3" data-position="74.82051598299253m 67.48365856555449m 29.20468726815984m" data-normal="-0.5305432814608463m 6.0907077826974744e-9m 0.8476578475403607m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">3</div>
+    </button><button class="Hotspot" slot="hotspot-4" data-position="-1.9003895527857821m 17.768478839557723m 13.883228561277743m" data-normal="-1m -1.5484303165667397e-17m 3.358317953158521e-17m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">4</div>
+    </button>
+    <div class="progress-bar hide" slot="progress-bar">
+        <div class="update-bar"></div>
+    </div>
+    <button slot="ar-button" id="ar-button">
+        View in your space
+    </button>
+    <div id="ar-prompt">
+        <img src="https://modelviewer.dev/shared-assets/icons/hand.png">
+    </div>
+</model-viewer>
